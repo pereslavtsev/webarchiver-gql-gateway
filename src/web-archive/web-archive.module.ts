@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
-import { WebArchiveService } from './service/web-archive.service';
-import { TasksService } from './service/tasks.service';
+import { WebArchiveService } from './services/web-archive.service';
+import { TasksService } from './services/tasks.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Task } from './models/task.model';
 import { Source } from './models/source.model';
 import { InjectBot } from '../mwn/mwn.decorator';
 import { mwn } from 'mwn';
-import { SourcesService } from './service/sources.service';
+import { SourcesService } from './services/sources.service';
 import { QueryFailedError } from 'typeorm';
 import { HttpModule } from '@nestjs/axios';
+import { stringify } from 'querystring';
 
 @Module({
   imports: [
@@ -32,6 +33,9 @@ export class WebArchiveModule {
   async onModuleInit() {
     for await (const snapshots of this.webArchiveService.fetchCapturesGen({
       url: 'https://www.bbc.co.uk/russian/radio/radio_vecher/2010/04/100401_vecher_afghanistan_drugs.shtml',
+      filter: {
+        statusCode: 200,
+      },
     })) {
     }
 

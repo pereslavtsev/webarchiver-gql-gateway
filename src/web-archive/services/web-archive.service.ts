@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { convertCdxJsonToPlainObject } from '../cdx.util';
 import { stringify } from 'querystring';
-import { AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import colorize from 'json-colorizer';
 
 type FetchCapturesParams = {
@@ -10,6 +10,15 @@ type FetchCapturesParams = {
   from?: string | number;
   to?: string | number;
   resumeKey?: string;
+  filter?: {
+    urlKey?: string;
+    timestamp?: number;
+    original?: string;
+    mimetype?: string;
+    statusCode?: number;
+    digest?: string;
+    length?: number;
+  };
 };
 
 @Injectable()
@@ -25,23 +34,27 @@ export class WebArchiveService {
     );
   }
 
-  protected onRequest(config) {
-    this.logger.log(
-      `CDX API Request to: ${config.baseURL}&${stringify(config.params)}`,
-    );
+  protected onRequest(config: AxiosRequestConfig) {
+    if (config.params.filter) {
+      config.params.filter = Object.entries(config.params.filter).map(
+        ([k, v]) => `${k.toLowerCase()}:${v}`,
+      );
+    }
+    const requestUrl = `${config.baseURL}?${stringify(config.params)}`;
+    this.logger.log(`CDX API Request to: ${requestUrl}`);
     return config;
   }
 
   protected onResponse(response: AxiosResponse) {
-    this.logger.log(
-      `CDX API Response (unparsed) ${colorize(response.data, {
-        pretty: true,
-      })}`,
-    );
+    // this.logger.log(
+    //   `CDX API Response (unparsed) ${colorize(response.data, {
+    //     pretty: true,
+    //   })}`,
+    // );
     response.data = convertCdxJsonToPlainObject(response.data);
-    this.logger.log(
-      `CDX API Response: ${colorize(response.data, { pretty: true })}`,
-    );
+    // this.logger.log(
+    //   `CDX API Response: ${colorize(response.data, { pretty: true })}`,
+    // );
     return response;
   }
 
