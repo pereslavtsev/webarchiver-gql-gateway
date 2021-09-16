@@ -33,7 +33,6 @@ export class WebArchiveModule {
     for await (const snapshots of this.webArchiveService.fetchCapturesGen({
       url: 'https://www.bbc.co.uk/russian/radio/radio_vecher/2010/04/100401_vecher_afghanistan_drugs.shtml',
     })) {
-      console.log('snapshots', snapshots);
     }
 
     // await this.bot.login();

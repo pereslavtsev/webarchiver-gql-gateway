@@ -30,6 +30,7 @@
     "@nestjs/typeorm": "^8.0.2",
     "axios": "^0.21.3",
     "bull": "^3.29.1",
+    "json-colorizer": "^2.2.2",
     "mwn": "^1.11.4",
     "pg": "^8.7.1",
     "reflect-metadata": "^0.1.13",

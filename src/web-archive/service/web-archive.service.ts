@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { convertCdxJsonToPlainObject } from '../cdx.util';
-import querystring from 'querystring';
+import { stringify } from 'querystring';
+import { AxiosResponse } from 'axios';
+import colorize from 'json-colorizer';
 
 type FetchCapturesParams = {
   url: string;
@@ -12,7 +14,36 @@ type FetchCapturesParams = {
 
 @Injectable()
 export class WebArchiveService {
-  constructor(private httpService: HttpService) {}
+  private readonly logger = new Logger(WebArchiveService.name);
+
+  constructor(private httpService: HttpService) {
+    this.httpService.axiosRef.interceptors.request.use(
+      this.onRequest.bind(this),
+    );
+    this.httpService.axiosRef.interceptors.response.use(
+      this.onResponse.bind(this),
+    );
+  }
+
+  protected onRequest(config) {
+    this.logger.log(
+      `CDX API Request to: ${config.baseURL}&${stringify(config.params)}`,
+    );
+    return config;
+  }
+
+  protected onResponse(response: AxiosResponse) {
+    this.logger.log(
+      `CDX API Response (unparsed) ${colorize(response.data, {
+        pretty: true,
+      })}`,
+    );
+    response.data = convertCdxJsonToPlainObject(response.data);
+    this.logger.log(
+      `CDX API Response: ${colorize(response.data, { pretty: true })}`,
+    );
+    return response;
+  }
 
   async fetchCaptures(params?: FetchCapturesParams) {
     const { data } = await this.httpService.axiosRef.request({
@@ -20,13 +51,12 @@ export class WebArchiveService {
         output: 'json',
         // from: 2010,
         // to: 2011,
-        limit: 3,
+        limit: 500,
         showResumeKey: true,
         ...params,
       },
     });
-    console.log('data', data);
-    return convertCdxJsonToPlainObject(data);
+    return data;
   }
 
   fetchCapturesGen(
