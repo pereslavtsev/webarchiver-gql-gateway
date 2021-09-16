@@ -14,7 +14,8 @@ import { HttpModule } from '@nestjs/axios';
   imports: [
     TypeOrmModule.forFeature([Task, Source]),
     HttpModule.register({
-      timeout: 5000,
+      baseURL: 'https://web.archive.org/cdx/search/cdx',
+      timeout: 10 * 1000,
       maxRedirects: 5,
     }),
   ],
@@ -25,48 +26,55 @@ export class WebArchiveModule {
   constructor(
     @InjectBot() private readonly bot: mwn,
     private readonly tasksService: TasksService,
+    private readonly webArchiveService: WebArchiveService,
   ) {}
 
   async onModuleInit() {
-    await this.bot.login();
-    for await (const json of this.bot.continuedQueryGen({
-      action: 'query',
-      titles: 'Шаблон:Талибан',
-      generator: 'transcludedin',
-      gtilimit: 'max',
-      gtinamespace: 0,
-      prop: 'revisions',
-      rvslots: 'main',
-      rvprop: ['ids', 'content'],
+    for await (const snapshots of this.webArchiveService.fetchCapturesGen({
+      url: 'https://www.bbc.co.uk/russian/radio/radio_vecher/2010/04/100401_vecher_afghanistan_drugs.shtml',
     })) {
-      for (const page of json.query.pages) {
-        const [
-          {
-            slots: {
-              main: { content },
-            },
-          },
-        ] = page.revisions;
-        const wkt = new this.bot.wikitext(content);
-        const templates = wkt.parseTemplates({
-          namePredicate: (name) => name.toLowerCase() === 'cite web',
-          templatePredicate: (name) => !name.getParam('archiveurl'),
-        });
-        const urls = templates.map((tpl) => tpl.getParam('url').value);
-        try {
-          const task = await this.tasksService.create(page.pageid, urls);
-          console.log('task', task);
-        } catch (error) {
-          if (error instanceof QueryFailedError) {
-            if (Number(error.driverError.code) === 23505) {
-              console.log('task already exists');
-            } else {
-              console.log('error', error);
-              throw error;
-            }
-          }
-        }
-      }
+      console.log('snapshots', snapshots);
     }
+
+    // await this.bot.login();
+    // for await (const json of this.bot.continuedQueryGen({
+    //   action: 'query',
+    //   titles: 'Шаблон:Талибан',
+    //   generator: 'transcludedin',
+    //   gtilimit: 'max',
+    //   gtinamespace: 0,
+    //   prop: 'revisions',
+    //   rvslots: 'main',
+    //   rvprop: ['ids', 'content'],
+    // })) {
+    //   for (const page of json.query.pages) {
+    //     const [
+    //       {
+    //         slots: {
+    //           main: { content },
+    //         },
+    //       },
+    //     ] = page.revisions;
+    //     const wkt = new this.bot.wikitext(content);
+    //     const templates = wkt.parseTemplates({
+    //       namePredicate: (name) => name.toLowerCase() === 'cite web',
+    //       templatePredicate: (name) => !name.getParam('archiveurl'),
+    //     });
+    //     const urls = templates.map((tpl) => tpl.getParam('url').value);
+    //     try {
+    //       const task = await this.tasksService.create(page.pageid, urls);
+    //       console.log('task', task);
+    //     } catch (error) {
+    //       if (error instanceof QueryFailedError) {
+    //         if (Number(error.driverError.code) === 23505) {
+    //           console.log('task already exists');
+    //         } else {
+    //           console.log('error', error);
+    //           throw error;
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
   }
 }

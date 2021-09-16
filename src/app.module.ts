@@ -1,6 +1,4 @@
 import { Inject, Module, OnModuleInit } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { mwn } from 'mwn';
 import { InjectBot } from './mwn/mwn.decorator';
 import { SharedModule } from './shared/shared.module';
@@ -8,8 +6,6 @@ import { WebArchiveModule } from './web-archive/web-archive.module';
 
 @Module({
   imports: [SharedModule, WebArchiveModule],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule implements OnModuleInit {
   constructor(@InjectBot() private readonly bot: mwn) {}
