@@ -3,6 +3,7 @@ import { InjectBot, MwnModule } from 'nest-mwn';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import databaseConfig from './config/database.config';
+import mwnConfig from './config/mwn.config';
 import { config as cdxConfig } from '../cdx';
 import {
   TypeOrmConfigService,
@@ -23,7 +24,7 @@ import { mwn } from 'mwn';
   imports: [
     LoggingModule.forRoot(ROOT_LOGGER, {}),
     ConfigModule.forRoot({
-      load: [databaseConfig, cdxConfig],
+      load: [databaseConfig, cdxConfig, mwnConfig],
       isGlobal: true,
     }),
     EventEmitterModule.forRoot(),
