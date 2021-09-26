@@ -42,11 +42,17 @@ export class SourcesService {
         !template.getParam('archiveurl') &&
         !template.getParam('url').value.match(/https?:\/\/web\.archive\.org/i),
     });
-    return templates.map((template) => {
+    const myTemplates = [];
+    for (const template of templates) {
       const source = new Source();
       source.title = template.getParam('title').value || null;
       source.url = template.getParam('url').value;
-      return source;
-    });
+      if (myTemplates.find((t) => t.url === source.url)) {
+        continue;
+      }
+      myTemplates.push(source);
+    }
+
+    return myTemplates;
   }
 }

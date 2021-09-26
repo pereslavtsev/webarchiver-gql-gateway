@@ -20,7 +20,6 @@ export class SourceSubscriber implements EntitySubscriberInterface<Source> {
   }
 
   async afterUpdate(event: UpdateEvent<Source>) {
-    console.log(`after Source upd: `, event.entity);
     this.eventEmitter.emit('source.updated', event.entity);
     switch (event.entity.status) {
       case SourceStatus.ARCHIVED: {
@@ -30,7 +29,6 @@ export class SourceSubscriber implements EntitySubscriberInterface<Source> {
   }
 
   async afterInsert(event: InsertEvent<Source>) {
-    console.log(`after Source INSERTED: `, event.entity);
     this.eventEmitter.emit('source.added', event.entity);
   }
 }

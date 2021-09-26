@@ -12,6 +12,7 @@ import { Job, Queue } from 'bull';
 import { TasksService } from '../services/tasks.service';
 import { SourcesService } from '../services/sources.service';
 import { Task } from '../models/task.model';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Processor('revisions')
 export class RevisionsProcessor {
@@ -23,8 +24,17 @@ export class RevisionsProcessor {
     @InjectQueue('snapshots') private snapshotsQueue: Queue,
     private tasksService: TasksService,
     private sourcesService: SourcesService,
+    private eventEmitter: EventEmitter2,
   ) {
     this.logger = rootLogger.child({ component: this.constructor.name });
+  }
+
+  @OnEvent('source.revisionMatched')
+  async handleRevisionMatched(event: { sourceId: string; timestamp: string }) {
+    const sss = await this.sourcesService.update(event.sourceId, {
+      addedAt: event.timestamp,
+    });
+    await this.snapshotsQueue.add(sss);
   }
 
   @Process()
@@ -32,31 +42,21 @@ export class RevisionsProcessor {
     const { pageId, sources } = job.data;
 
     try {
-      //console.log('detect', job.data);
       const dict = {};
-      console.log('dict', dict);
       for (const source of sources) {
         dict[source.url] = null;
       }
-      // console.log('dictdict', dict);
       let progress = 0;
-      const task = await this.tasksService.findByPageId(pageId);
-      console.log('task', task);
-
-      for await (const json of this.bot.continuedQueryGen({
+      for await (const { query } of this.bot.continuedQueryGen({
         action: 'query',
         pageids: pageId,
-        // generator: 'revisions',
-        // grvlimit: '10',
         rvdir: 'newer',
-        // prop: 'extlinks',
         prop: 'revisions',
         rvslots: 'main',
         rvlimit: 'max',
         rvprop: ['ids', 'content', 'timestamp'],
       })) {
-        const [{ revisions }] = json.query.pages;
-        console.log(revisions[0].timestamp);
+        const [{ revisions }] = query.pages;
 
         for (const revision of revisions) {
           const {
@@ -72,14 +72,14 @@ export class RevisionsProcessor {
           for (const source of sources) {
             if (content.includes(source.url) && !dict[source.url]) {
               dict[source.url] = timestamp;
-              const s = task.sources.find((s) => s.url === source.url);
+              const s = sources.find((s) => s.url === source.url);
               s.addedAt = new Date(timestamp);
               const sss = await this.sourcesService.update(s.id, {
                 addedAt: timestamp,
               });
-              console.log('sss', sss);
               await this.snapshotsQueue.add(sss);
             }
+
             if (Object.values(dict).every((timestamp) => !!timestamp)) {
               //await job.finished();
               await job.progress(100);
@@ -102,7 +102,7 @@ export class RevisionsProcessor {
   }
 
   @OnQueueCompleted()
-  completed(job: Job, result: any) {
+  completed(job: Job) {
     const jobLogger = this.logger.child({ reqId: job.id });
     //jobLogger.debug({ job, result });
     jobLogger.info(

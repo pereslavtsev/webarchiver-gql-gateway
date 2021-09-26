@@ -4,6 +4,7 @@ import { ApiRevision, mwn } from 'mwn';
 import { Job } from 'bull';
 import { Task } from '../models/task.model';
 import { DateTime } from 'luxon';
+import { SourceStatus } from '../enums/source-status.enum';
 
 @Processor('writer')
 export class WriterProcessor {
@@ -34,11 +35,15 @@ export class WriterProcessor {
         // TODO: handle
       }
 
+      const archivedSources = task.sources.filter(
+        (source) => source.status === SourceStatus.ARCHIVED,
+      );
+
       const wkt = new this.bot.wikitext(content);
       const templates = wkt.parseTemplates({
         namePredicate: (name) => name.toLowerCase() === 'cite web',
         templatePredicate: (template) =>
-          task.sources
+          archivedSources
             .map((source) => source.url)
             .includes(template.getParam('url').value),
       });
@@ -46,7 +51,7 @@ export class WriterProcessor {
       for (const template of templates) {
         const oldWikitext = template.wikitext.slice();
         const url = template.getParam('url').value;
-        const source = task.sources.find((source) => source.url === url);
+        const source = archivedSources.find((source) => source.url === url);
         const archiveDate = DateTime.fromISO(
           source.archiveDate as unknown as string,
         ).toISODate();
@@ -60,7 +65,7 @@ export class WriterProcessor {
       const result = await this.bot.save(
         task.pageTitle,
         currentContent,
-        `Архивировано источников: ${task.sources.length}`,
+        `Архивировано источников: ${archivedSources.length}`,
         {
           minor: true,
         },

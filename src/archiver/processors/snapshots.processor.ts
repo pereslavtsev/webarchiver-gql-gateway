@@ -53,6 +53,9 @@ export class SnapshotsProcessor {
       if (!allSnapshots.length) {
         //await job.takeLock();
         jobLogger.debug(`no snapshots for url was found, job has been locked`);
+        await this.sourcesService.update(job.data.id, {
+          status: SourceStatus.FAILED,
+        });
       }
       console.log(this.snapshotsService.buildUrl(ts));
       await this.sourcesService.update(job.data.id, {

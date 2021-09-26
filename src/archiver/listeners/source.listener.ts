@@ -24,14 +24,18 @@ export class SourceListener {
   async handleSourceUpdatedEvent(event: Source) {
     const source = await this.sourcesRepository.findOne(event.id);
     const task = await source.task;
-    const unarchivedSources = await this.sourcesRepository.count({
+    const sources = await this.sourcesRepository.find({
       where: {
         task,
-        status: Not(SourceStatus.ARCHIVED),
+        //status: Not(SourceStatus.ARCHIVED),
       },
     });
-    console.log('unarchivedSources', unarchivedSources);
-    if (!unarchivedSources) {
+    const unprocessedSources = sources.filter(
+      (source) =>
+        ![SourceStatus.ARCHIVED, SourceStatus.FAILED].includes(source.status),
+    );
+    console.log('unprocessedSources', unprocessedSources.length);
+    if (!unprocessedSources.length) {
       await this.tasksRepository.update(
         { id: task.id },
         {

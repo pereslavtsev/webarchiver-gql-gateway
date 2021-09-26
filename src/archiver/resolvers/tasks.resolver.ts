@@ -60,7 +60,6 @@ export class TasksResolver {
 
   @OnEvent('task.updated')
   async handleTaskUpdatedEvent(event: Task) {
-    console.log('taskUpdated', event);
     const task = await this.tasksService.findById(event.id);
     await pubSub.publish('taskUpdated', { taskUpdated: task });
   }
