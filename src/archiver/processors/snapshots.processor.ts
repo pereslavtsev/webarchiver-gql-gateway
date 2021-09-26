@@ -57,6 +57,7 @@ export class SnapshotsProcessor {
       console.log(this.snapshotsService.buildUrl(ts));
       await this.sourcesService.update(job.data.id, {
         archiveUrl: this.snapshotsService.buildUrl(ts),
+        archiveDate: ts.capturedAt,
         status: SourceStatus.ARCHIVED,
       });
     } catch (error) {
@@ -68,9 +69,4 @@ export class SnapshotsProcessor {
   error(error: Error) {
     this.logger.error(error);
   }
-
-  // @OnQueueActive()
-  // onActive(job: Job) {
-  //   console.log('job222', job.data);
-  // }
 }

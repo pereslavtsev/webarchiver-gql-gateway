@@ -9,8 +9,6 @@ export class CdxService {
     return this.httpService.axiosRef.get('/cdx/search/cdx', {
       params: {
         output: 'json',
-        // from: 2010,
-        // to: 2011,
         limit: 500,
         showResumeKey: true,
         ...params,

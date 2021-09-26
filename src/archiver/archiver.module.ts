@@ -20,6 +20,7 @@ import {
 import { CrawlerResolver } from './resolvers/crawler.resolver';
 import { Queue } from 'bull';
 import { SnapshotsModule } from '../snapshots/snapshots.module';
+import { PagesResolver } from './resolvers/pages.resolver';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SnapshotsModule } from '../snapshots/snapshots.module';
   providers: [
     // crawlers
     CrawlerResolver,
+    PagesResolver,
     TasksResolver,
 
     // services
@@ -90,23 +92,6 @@ export class ArchiverModule implements OnModuleInit {
       await queue.clean(0, 'delayed');
       await queue.clean(0, 'failed');
     }
-    await this.pagesQueue.pause();
     await this.connection.getRepository(Task).delete({});
-    await this.pagesQueue.add({
-      // action: 'query',
-      // titles: 'Шаблон:Красные кхмеры',
-      // generator: 'transcludedin',
-      // gtilimit: '10',
-      // gtinamespace: 0,
-      // prop: 'revisions',
-      // rvslots: 'main',
-      // rvprop: ['ids', 'content'],
-
-      action: 'query',
-      titles: 'Красный отряд',
-      prop: 'revisions',
-      rvslots: 'main',
-      rvprop: ['ids', 'content'],
-    });
   }
 }

@@ -59,4 +59,8 @@ export class Source {
   @Field({ nullable: true })
   @Column({ nullable: true })
   archiveUrl: string | null;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  archiveDate: string | null;
 }

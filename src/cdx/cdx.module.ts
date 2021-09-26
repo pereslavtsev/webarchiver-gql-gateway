@@ -20,7 +20,7 @@ import { CdxClientCoreModule } from './cdx-client-core.module';
   providers: [CdxService],
   exports: [CdxService],
 })
-export class CdxModule implements OnModuleInit {
+export class CdxModule {
   protected readonly logger: Bunyan;
 
   constructor(
@@ -52,21 +52,6 @@ export class CdxModule implements OnModuleInit {
       module: CdxModule,
       imports: [CdxClientCoreModule.forRootAsync(options)],
     };
-  }
-
-  async onModuleInit(): Promise<void> {
-    // try {
-    //   this.logger.debug('Test connection to CDX API server ...');
-    //   await this.cdxService.query({
-    //     url: 'archive.org',
-    //     limit: 3,
-    //   });
-    // } catch (error) {
-    //   this.logger.warn(error, 'CDX API server returns error');
-    //   this.logger.warn(
-    //     `It seems CDX API server is temporary unavailable now, it's a NOT serious error`,
-    //   );
-    // }
   }
 
   protected onRequest(config: AxiosRequestConfig): AxiosRequestConfig {

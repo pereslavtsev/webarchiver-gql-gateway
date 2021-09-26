@@ -17,17 +17,17 @@ export class Task {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Field(() => ID)
-  @Column({ type: 'numeric', unique: true })
-  revisionId!: number;
+  @Field(() => ID, { nullable: true })
+  @Column({ type: 'numeric', unique: true, nullable: true })
+  revisionId!: number | null;
 
   @Field(() => ID)
   @Column({ type: 'numeric', unique: true })
   pageId!: number;
 
-  @Field()
-  @Column()
-  pageTitle!: string;
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  pageTitle!: string | null;
 
   @Field(() => [Source])
   @OneToMany(() => Source, (source) => source.task, {

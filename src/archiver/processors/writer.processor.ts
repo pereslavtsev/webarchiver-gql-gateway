@@ -48,17 +48,26 @@ export class WriterProcessor {
         const url = template.getParam('url').value;
         const source = task.sources.find((source) => source.url === url);
         const archiveDate = DateTime.fromISO(
-          source.addedAt as unknown as string,
+          source.archiveDate as unknown as string,
         ).toISODate();
         template.wikitext = template.wikitext.replace(
           /}}/,
-          `|archive-url=${source.archiveUrl}|archive-date=${archiveDate}}`,
+          `|archive-url=${source.archiveUrl}|archive-date=${archiveDate}}}`,
         );
         currentContent = currentContent.replace(oldWikitext, template.wikitext);
       }
       console.log('currentContent', currentContent);
-    } catch (e) {
-      console.log('e', e);
+      const result = await this.bot.save(
+        task.pageTitle,
+        currentContent,
+        `Архивировано источников: ${task.sources.length}`,
+        {
+          minor: true,
+        },
+      );
+      console.log('result', result);
+    } catch (error) {
+      console.log('error', error);
     }
   }
 }

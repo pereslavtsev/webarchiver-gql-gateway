@@ -55,7 +55,6 @@ export class RevisionsProcessor {
         rvlimit: 'max',
         rvprop: ['ids', 'content', 'timestamp'],
       })) {
-        //console.log('xxx', json.query.pages[0].revisions.length);
         const [{ revisions }] = json.query.pages;
         console.log(revisions[0].timestamp);
 
@@ -66,7 +65,6 @@ export class RevisionsProcessor {
             },
             timestamp,
           } = revision;
-          //console.log('{ content, timestamp }', { content, timestamp });
           if (texthidden) {
             continue;
           }
@@ -97,7 +95,6 @@ export class RevisionsProcessor {
         if (progress !== job.progress()) {
           await job.progress(progress);
         }
-        //console.log(pageId, 'dict', dict);
       }
     } catch (e) {
       console.log('error', e);

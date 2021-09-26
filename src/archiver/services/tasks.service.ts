@@ -34,10 +34,12 @@ export class TasksService {
     return paginate(query, paginationArgs);
   }
 
+  async update(id: Task['id'], data: Partial<Task>) {
+    const task = await this.findById(id);
+    return this.tasksRepository.save({ ...task, ...data });
+  }
+
   async create(task: Task) {
-    if (!task.sources.length) {
-      return null;
-    }
     try {
       return await this.tasksRepository.save(task);
     } catch (error) {
