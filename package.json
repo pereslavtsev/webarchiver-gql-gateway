@@ -1,12 +1,24 @@
 {
-  "name": "mw-bot",
+  "name": "@webarchiver/gql-gateway",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
-  "private": true,
-  "license": "UNLICENSED",
+  "description": "WebArchiver GraphQL Gateway",
+  "author": {
+    "name": "Vitaly Pereslavtsev",
+    "email": "dev@pereslavtsev.com",
+    "url": "https://www.pereslavtsev.com/"
+  },
+  "homepage": "https://github.com/pereslavtsev/webarchiver-gql-gateway#readme",
+  "bugs": {
+    "url": "https://github.com/pereslavtsev/webarchiver-gql-gateway/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pereslavtsev/webarchiver-gql-gateway.git"
+  },
+  "license": "ISC",
   "scripts": {
     "prebuild": "rimraf dist",
+    "prepare": "husky install",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -24,8 +36,6 @@
     "@eropple/nestjs-bunyan": "^0.5.7",
     "@grpc/grpc-js": "1.4.4",
     "@mechanicalhuman/bunyan-pretty": "3.0.0",
-    "@nestjs/axios": "^0.0.1",
-    "@nestjs/bull": "^0.4.1",
     "@nestjs/common": "^8.0.0",
     "@nestjs/config": "^1.0.1",
     "@nestjs/core": "^8.0.0",
@@ -42,13 +52,11 @@
     "json-colorizer": "^2.2.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "7.4.0",
-    "short-uuid": "^4.2.0",
-    "typeorm": "^0.2.37",
-    "typeorm-naming-strategies": "^2.0.0",
-    "url-parse": "^1.5.3"
+    "rxjs": "^7.2.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^14.1.0",
+    "@commitlint/config-conventional": "^14.1.0",
     "@nestjs/cli": "^8.0.0",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
@@ -61,6 +69,7 @@
     "eslint": "^7.30.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
+    "husky": "^7.0.4",
     "jest": "^27.0.6",
     "prettier": "^2.3.2",
     "supertest": "^6.1.3",
@@ -69,22 +78,5 @@
     "ts-node": "^10.0.0",
     "tsconfig-paths": "^3.10.1",
     "typescript": "^4.3.5"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }
