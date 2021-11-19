@@ -1,53 +1,40 @@
 import { Global, Module, OnModuleInit } from '@nestjs/common';
 import { InjectBot, MwnModule } from 'nest-mwn';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import databaseConfig from './config/database.config';
-import mwnConfig from './config/mwn.config';
-import { config as cdxConfig } from '../cdx';
-import {
-  TypeOrmConfigService,
-  GqlConfigService,
-  BullConfigService,
-} from './services';
-import { BullModule } from '@nestjs/bull';
+import { GqlConfigService } from './services';
 import { GraphQLModule } from '@nestjs/graphql';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { MwnConfigService } from './services/mwn-config.service';
 import { LoggingModule } from '@eropple/nestjs-bunyan';
 import { ROOT_LOGGER } from './utils/logger.util';
 import { Logger } from './services/logger.service';
-import { mwn } from 'mwn';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+
+const { TASKS_SERVICE_NAME, WEBARCHIVER_CORE_V1_PACKAGE_NAME } = core.v1;
 
 @Global()
 @Module({
   imports: [
     LoggingModule.forRoot(ROOT_LOGGER, {}),
     ConfigModule.forRoot({
-      load: [databaseConfig, cdxConfig, mwnConfig],
       isGlobal: true,
     }),
     EventEmitterModule.forRoot(),
-    BullModule.forRootAsync({
-      useClass: BullConfigService,
-    }),
-    MwnModule.forRootAsync({
-      useClass: MwnConfigService,
-    }),
-    TypeOrmModule.forRootAsync({
-      useClass: TypeOrmConfigService,
-    }),
+    ClientsModule.register([
+      {
+        name: 'CORE_PACKAGE',
+        transport: Transport.GRPC,
+        options: {
+          url: '0.0.0.0:50051',
+          package: WEBARCHIVER_CORE_V1_PACKAGE_NAME,
+          protoPath: core.getProtoPath(),
+        },
+      },
+    ]),
     GraphQLModule.forRootAsync({
       useClass: GqlConfigService,
     }),
   ],
   providers: [Logger],
-  exports: [MwnModule, Logger],
+  exports: [Logger],
 })
-export class SharedModule implements OnModuleInit {
-  constructor(@InjectBot() private readonly bot: mwn) {}
-
-  async onModuleInit(): Promise<void> {
-    await this.bot.login();
-  }
-}
+export class SharedModule {}

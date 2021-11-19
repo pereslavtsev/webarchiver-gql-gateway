@@ -2,7 +2,7 @@ import {
   Connection,
   EntitySubscriberInterface,
   EventSubscriber,
-  InsertEvent,
+  InsertEvent, TransactionCommitEvent,
   UpdateEvent,
 } from 'typeorm';
 import { Task } from '../models/task.model';
@@ -19,6 +19,7 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
   }
 
   afterUpdate(event: UpdateEvent<Task>) {
+    console.log('event', event.databaseEntity);
     this.eventEmitter.emit('task.updated', event.entity);
   }
 

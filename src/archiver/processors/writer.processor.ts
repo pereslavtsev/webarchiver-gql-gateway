@@ -5,10 +5,16 @@ import { Job } from 'bull';
 import { Task } from '../models/task.model';
 import { DateTime } from 'luxon';
 import { SourceStatus } from '../enums/source-status.enum';
+import { TasksService } from '../services/tasks.service';
+import { TaskStatus } from '../enums/task-status.enum';
+import { TEMPLATES } from '../services/sources.service';
 
 @Processor('writer')
 export class WriterProcessor {
-  constructor(@InjectBot() private readonly bot: mwn) {}
+  constructor(
+    private taskService: TasksService,
+    @InjectBot() private readonly bot: mwn,
+  ) {}
 
   @Process()
   async handleProcess(job: Job<Task>) {
@@ -41,7 +47,7 @@ export class WriterProcessor {
 
       const wkt = new this.bot.wikitext(content);
       const templates = wkt.parseTemplates({
-        namePredicate: (name) => name.toLowerCase() === 'cite web',
+        namePredicate: (name) => TEMPLATES.includes(name.toLowerCase()),
         templatePredicate: (template) =>
           archivedSources
             .map((source) => source.url)
@@ -55,14 +61,18 @@ export class WriterProcessor {
         const archiveDate = DateTime.fromISO(
           source.archiveDate as unknown as string,
         ).toISODate();
+        const urlParam =
+          source.templateName === 'cite web' ? 'archive-url' : 'archiveurl';
+        const dateParam =
+          source.templateName === 'cite web' ? 'archive-date' : 'archivedate';
         template.wikitext = template.wikitext.replace(
           /}}/,
-          `|archive-url=${source.archiveUrl}|archive-date=${archiveDate}}}`,
+          `|${urlParam}=${source.archiveUrl}|${dateParam}=${archiveDate}}}`,
         );
         currentContent = currentContent.replace(oldWikitext, template.wikitext);
       }
       console.log('currentContent', currentContent);
-      const result = await this.bot.save(
+      const res = await this.bot.save(
         task.pageTitle,
         currentContent,
         `Архивировано источников: ${archivedSources.length}`,
@@ -70,7 +80,14 @@ export class WriterProcessor {
           minor: true,
         },
       );
-      console.log('result', result);
+      console.log('res', res);
+      if (res.result === 'Success') {
+        await this.taskService.update(task.id, {
+          status: TaskStatus.COMPLETED,
+        });
+      } else {
+        console.log('error res', res);
+      }
     } catch (error) {
       console.log('error', error);
     }

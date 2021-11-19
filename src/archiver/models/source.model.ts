@@ -1,7 +1,7 @@
 import {
   Column,
   CreateDateColumn,
-  Entity, JoinColumn,
+  Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -24,6 +24,14 @@ export class Source {
   @Field({ nullable: true })
   @Column({ nullable: true })
   title!: string | null;
+
+  @Field()
+  @Column()
+  templateName!: string;
+
+  @Field()
+  @Column()
+  templateWikitext!: string;
 
   @ManyToOne(() => Task, (task) => task.sources, {
     onDelete: 'CASCADE',

@@ -4,9 +4,9 @@ import { Logger } from './shared/services/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: new Logger(),
+    // logger: new Logger(),
   });
-  app.useLogger(app.get(Logger));
+  //app.useLogger(app.get(Logger));
   await app.listen(3001);
 }
 bootstrap();

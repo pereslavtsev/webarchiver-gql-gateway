@@ -38,7 +38,15 @@ export class SnapshotsProcessor {
       );
       jobLogger.debug('find nearest snapshot');
 
-      const [ts] = allSnapshots
+      if (!allSnapshots.length) {
+        //await job.takeLock();
+        jobLogger.debug(`no snapshots for url was found, job has been locked`);
+        await this.sourcesService.update(job.data.id, {
+          status: SourceStatus.FAILED,
+        });
+        return;
+      }
+      const [nearestSnapshot] = allSnapshots
         .slice()
         .sort(
           (a, b) =>
@@ -49,22 +57,17 @@ export class SnapshotsProcessor {
               b.capturedAt.valueOf() - new Date(job.data.addedAt).valueOf(),
             ),
         );
-
-      if (!allSnapshots.length) {
-        //await job.takeLock();
-        jobLogger.debug(`no snapshots for url was found, job has been locked`);
-        await this.sourcesService.update(job.data.id, {
-          status: SourceStatus.FAILED,
-        });
-      }
-      console.log(this.snapshotsService.buildUrl(ts));
+      const archiveUrl = this.snapshotsService.buildUrl(nearestSnapshot);
       await this.sourcesService.update(job.data.id, {
-        archiveUrl: this.snapshotsService.buildUrl(ts),
-        archiveDate: ts.capturedAt,
+        archiveUrl,
+        archiveDate: nearestSnapshot.capturedAt,
         status: SourceStatus.ARCHIVED,
       });
     } catch (error) {
       this.logger.error(error);
+      await this.sourcesService.update(job.data.id, {
+        status: SourceStatus.FAILED,
+      });
     }
   }
 

@@ -43,16 +43,21 @@ export class PagesProcessor {
       this.logger.info(
         `${sources.length} unarchived sources from page "${page.title}" was found`,
       );
-      if (sources.length) {
-        this.logger.info(
-          'unarchived urls:',
-          colorizeJson(JSON.stringify(sources.map((source) => source.url))),
-        );
-        task.revisionId = latestRevision.revid;
-        task.pageTitle = page.title;
-        task.sources = sources;
-        this.eventEmitter.emit('task.processed', task);
+      if (!sources.length) {
+        await this.tasksRepository.save({
+          ...task,
+          status: TaskStatus.SKIPPED,
+        });
+        return;
       }
+      this.logger.info(
+        'unarchived urls:',
+        colorizeJson(JSON.stringify(sources.map((source) => source.url))),
+      );
+      task.revisionId = latestRevision.revid;
+      task.pageTitle = page.title;
+      task.sources = sources;
+      this.eventEmitter.emit('task.processed', task);
       //   const json = await this.bot.query(job.data);
       //   this.logger.info(
       //     'received pages:',

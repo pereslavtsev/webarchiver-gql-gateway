@@ -7,6 +7,7 @@ export enum TaskStatus {
   READY_TO_WRITE = 'READY_TO_WRITE',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
+  SKIPPED = 'SKIPPED',
 }
 
 registerEnumType(TaskStatus, {
