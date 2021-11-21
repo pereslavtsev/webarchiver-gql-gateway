@@ -5,7 +5,6 @@ import { GqlModuleOptions, GqlOptionsFactory } from '@nestjs/graphql';
 export class GqlConfigService implements GqlOptionsFactory {
   createGqlOptions(): GqlModuleOptions {
     return {
-      playground: true,
       autoSchemaFile: true,
       buildSchemaOptions: {
         dateScalarMode: 'timestamp',

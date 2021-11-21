@@ -18,9 +18,9 @@ export class Task {
   @Field(() => Task.Status)
   status: core.v1.Task_Status;
 
-  @Field()
-  createdAt: Date;
-
-  @Field()
-  updatedAt: Date;
+  // @Field()
+  // createdAt: Date;
+  //
+  // @Field()
+  // updatedAt: Date;
 }
