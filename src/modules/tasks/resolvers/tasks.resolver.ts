@@ -1,74 +1,73 @@
 import { Args, Resolver, Mutation, Query } from '@nestjs/graphql';
-import { Task } from './models/task.model';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { Inject, OnModuleInit } from '@nestjs/common';
+import { Task } from '../models';
+import { CreateTaskDto } from '../dto';
+import { Inject } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { catchError, map, Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
-import { core } from '@webarchiver/protoc';
-import { OnTask } from './tasks.decorators';
+import { OnTask } from '../tasks.decorators';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-
-const { TASKS_SERVICE_NAME, SOURCES_SERVICE_NAME } = core.v1;
+import { Source } from '../../sources/models';
+import { Bunyan, RootLogger } from '@eropple/nestjs-bunyan';
+import { GrpcClientProvider } from '../../shared';
 
 @Resolver(() => Task)
-export class TasksResolver implements OnModuleInit {
-  private tasksService: core.v1.TasksServiceClient;
-  private sourcesService: core.v1.SourcesServiceClient;
-
+export class TasksResolver extends GrpcClientProvider {
   constructor(
-    @Inject('CORE_PACKAGE') private client: ClientGrpc,
+    @RootLogger() rootLogger: Bunyan,
+    @Inject('webarchiver') client: ClientGrpc,
     private eventEmitter: EventEmitter2,
-  ) {}
-
-  onModuleInit() {
-    this.tasksService =
-      this.client.getService<core.v1.TasksServiceClient>(TASKS_SERVICE_NAME);
-    this.sourcesService =
-      this.client.getService<core.v1.SourcesServiceClient>(
-        SOURCES_SERVICE_NAME,
-      );
+  ) {
+    super(rootLogger, client);
   }
 
-  @Query(() => Task)
-  getTasks() {
+  @Query(() => Task, { name: 'task' })
+  getTask(): Observable<Task> {
     return this.tasksService.getTask({ id: '' }, new Metadata());
   }
 
   @OnTask.Created()
-  handleTaskCreatedEvent(task: core.v1.Task) {
+  handleTaskCreatedEvent(task: Task) {
     this.tasksService.getTaskStream({ id: task.id }, new Metadata()).subscribe(
       (task) => {
         const { status } = task;
         switch (status) {
-          case core.v1.Task_Status.MATCHED: {
+          case Task.Status.MATCHED: {
             this.eventEmitter.emit('task.matched', task);
             break;
           }
-          case core.v1.Task_Status.ACCEPTED: {
+          case Task.Status.ACCEPTED: {
             this.eventEmitter.emit('task.accepted', task);
+            break;
+          }
+          case Task.Status.SKIPPED: {
+            console.log('skip', task);
+            this.eventEmitter.emit('task.skipped', task);
           }
         }
       },
       (err) => {
         console.log('err2', err);
       },
+      () => {
+        console.log('handleTaskCreatedEvent', 'complete');
+      },
     );
   }
 
   @OnTask.Accepted()
-  handleTaskAcceptedEvent(task: core.v1.Task) {
+  handleTaskAcceptedEvent(task: Task) {
     console.log('accepted', task);
     this.sourcesService
       .getSourcesStream({ taskId: task.id }, new Metadata())
       .subscribe((source) => {
         const { status } = source;
         switch (status) {
-          case core.v1.Source_Status.PENDING: {
+          case Source.Status.PENDING: {
             this.eventEmitter.emit('source.received', source);
             break;
           }
-          case core.v1.Source_Status.MATCHED: {
+          case Source.Status.MATCHED: {
             this.eventEmitter.emit('source.matched', source);
             break;
           }
@@ -76,11 +75,11 @@ export class TasksResolver implements OnModuleInit {
       });
   }
 
-  @OnTask.Matched()
-  handleTaskMatchedEvent(task: core.v1.Task) {}
+  // @OnTask.Matched()
+  // handleTaskMatchedEvent(task: Task) {}
 
   @Mutation(() => Task)
-  createTask(@Args('input') { pageId }: CreateTaskDto) {
+  createTask(@Args('input') { pageId }: CreateTaskDto): Observable<Task> {
     console.log('pageId', pageId);
     return this.tasksService.createTask({ pageId }, new Metadata()).pipe(
       map((task) => {

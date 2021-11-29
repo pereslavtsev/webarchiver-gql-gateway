@@ -44,6 +44,7 @@
     "@nestjs/microservices": "^8.2.2",
     "@nestjs/platform-express": "^8.0.0",
     "@pereslavtsev/webarchiver-misc": "^1.0.0",
+    "@pereslavtsev/webarchiver-protoc": "^1.0.2",
     "apollo-server-express": "^3.3.0",
     "bunyan": "^1.8.15",
     "class-transformer": "^0.4.0",

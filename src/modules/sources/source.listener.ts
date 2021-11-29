@@ -1,40 +1,43 @@
-import { archiver, core } from '@webarchiver/protoc';
-import { Inject, OnModuleInit } from '@nestjs/common';
+import { archiver, snapshots, sources } from '@pereslavtsev/webarchiver-protoc';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Metadata } from '@grpc/grpc-js';
+import { Source } from './models';
+import { Task } from '../tasks';
 
-const { ARCHIVER_SERVICE_NAME, SNAPSHOTS_SERVICE_NAME } = archiver.v1;
-const { SOURCES_SERVICE_NAME } = core.v1;
+const { ARCHIVER_SERVICE_NAME } = archiver;
+const { SNAPSHOTS_SERVICE_NAME } = snapshots;
+const { SOURCES_SERVICE_NAME } = sources;
 
+@Injectable()
 export class SourceListener implements OnModuleInit {
-  private archiverService: archiver.v1.ArchiverServiceClient;
-  private snapshotsService: archiver.v1.SnapshotsServiceClient;
-  private sourcesService: core.v1.SourcesServiceClient;
+  private archiverService: archiver.ArchiverServiceClient;
+  private snapshotsService: snapshots.SnapshotsServiceClient;
+  private sourcesService: sources.SourcesServiceClient;
 
   constructor(
-    @Inject('ARCHIVER_PACKAGE') private archiverClient: ClientGrpc,
-    @Inject('CORE_PACKAGE') private coreClient: ClientGrpc,
+    @Inject('webarchiver') private client: ClientGrpc,
     private eventEmitter: EventEmitter2,
   ) {}
 
   onModuleInit() {
     this.sourcesService =
-      this.coreClient.getService<core.v1.SourcesServiceClient>(
+      this.client.getService<sources.SourcesServiceClient>(
         SOURCES_SERVICE_NAME,
       );
     this.archiverService =
-      this.archiverClient.getService<archiver.v1.ArchiverServiceClient>(
+      this.client.getService<archiver.ArchiverServiceClient>(
         ARCHIVER_SERVICE_NAME,
       );
     this.snapshotsService =
-      this.archiverClient.getService<archiver.v1.SnapshotsServiceClient>(
+      this.client.getService<snapshots.SnapshotsServiceClient>(
         SNAPSHOTS_SERVICE_NAME,
       );
   }
 
   @OnEvent('source.matched')
-  handleSourceMatchedEvent(source: core.v1.Source) {
+  handleSourceMatchedEvent(source: Source) {
     console.log('matched', source);
     const { revisionDate: desiredDate, url, title: quote } = source;
     this.archiverService
@@ -46,14 +49,21 @@ export class SourceListener implements OnModuleInit {
           console.log('vvv', task);
 
           switch (status) {
-            case archiver.v1.Task_Status.PENDING: {
+            case archiver.ArchiverTask_Status.PENDING: {
               this.eventEmitter.emit('source.created', {
                 source,
                 archiverTask: task,
               });
               break;
             }
-            case archiver.v1.Task_Status.DONE: {
+            case archiver.ArchiverTask_Status.FAILED: {
+              this.eventEmitter.emit('source.failed', {
+                source,
+                archiverTask: task,
+              });
+              break;
+            }
+            case archiver.ArchiverTask_Status.DONE: {
               this.eventEmitter.emit('source.checked', {
                 source,
                 archiverTask: task,
@@ -68,13 +78,34 @@ export class SourceListener implements OnModuleInit {
       );
   }
 
+  @OnEvent('source.failed')
+  handleSourceFailedEvent({
+    // archiverTask,
+    source,
+  }: {
+    source: Source;
+    archiverTask: Task;
+  }) {
+    this.sourcesService
+      .discardSource(
+        {
+          id: source.id,
+        },
+        new Metadata(),
+      )
+      .subscribe(
+        (source) => console.log('source', source),
+        (error) => console.log('error', error),
+      );
+  }
+
   @OnEvent('source.checked')
   handleSourceArchivedEvent({
     archiverTask,
     source,
   }: {
-    source: core.v1.Source;
-    archiverTask: archiver.v1.Task;
+    source: Source;
+    archiverTask: Task;
   }) {
     console.log('{ archiverTask, source }', { archiverTask, source });
     this.snapshotsService
@@ -84,7 +115,21 @@ export class SourceListener implements OnModuleInit {
         const { status, uri: archiveUrl, capturedAt: archiveDate } = snapshot;
 
         switch (status) {
-          case archiver.v1.Snapshot_Status.CHECKED: {
+          case snapshots.Snapshot_Status.FAILED: {
+            this.sourcesService
+              .discardSource(
+                {
+                  id: source.id,
+                },
+                new Metadata(),
+              )
+              .subscribe(
+                (source) => console.log('source', source),
+                (error) => console.log('error', error),
+              );
+            break;
+          }
+          case snapshots.Snapshot_Status.CHECKED: {
             this.sourcesService
               .archiveSource(
                 {
