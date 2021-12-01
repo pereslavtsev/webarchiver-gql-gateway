@@ -44,10 +44,8 @@ export class TaskListener extends GrpcClientProvider {
       }
     }
 
-    const xxx = plainToClass(Task, task, { groups: ['graphql'] });
-    console.log('xxx', xxx)
     await this.pubsub.publish('taskUpdated', {
-      taskUpdated: xxx,
+      taskUpdated: plainToClass(Task, task, { groups: ['graphql'] }),
     });
   }
 
