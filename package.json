@@ -1,6 +1,6 @@
 {
   "name": "@webarchiver/gql-gateway",
-  "version": "0.0.1",
+  "version": "1.0.9",
   "description": "WebArchiver GraphQL Gateway",
   "author": {
     "name": "Vitaly Pereslavtsev",
@@ -19,7 +19,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "prepare": "husky install",
-    "build": "nest build",
+    "build": "make",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -29,7 +29,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:debug": "make test-debug",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
