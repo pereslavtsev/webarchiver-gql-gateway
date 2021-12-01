@@ -1,5 +1,6 @@
-import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
-import { tasks } from '@pereslavtsev/webarchiver-protoc';
+import { Field, ID, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { tasks, toDate } from '@pereslavtsev/webarchiver-protoc';
+import { Transform } from 'class-transformer';
 
 registerEnumType(tasks.Task_Status, {
   name: 'TaskStatus',
@@ -12,15 +13,19 @@ export class Task implements tasks.Task {
   @Field(() => ID)
   id: tasks.Task['id'];
 
-  @Field(() => Int)
+  @Field(() => ID)
   pageId: number;
 
   @Field(() => Task.Status)
   status: tasks.Task_Status;
 
   @Field()
+  @Transform(({ value }) => toDate(value), { groups: ['graphql'] })
+  @Transform(({ value }) => new Date(value), { groups: ['pubsub'] })
   createdAt: Date;
 
   @Field()
+  @Transform(({ value }) => toDate(value), { groups: ['graphql'] })
+  @Transform(({ value }) => new Date(value), { groups: ['pubsub'] })
   updatedAt: Date;
 }

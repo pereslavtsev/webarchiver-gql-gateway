@@ -15,4 +15,8 @@ export class OnTask {
   static Matched() {
     return OnEvent('task.matched');
   }
+
+  static Skipped() {
+    return OnEvent('task.skipped');
+  }
 }

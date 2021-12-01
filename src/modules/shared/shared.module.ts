@@ -1,13 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { GqlConfigService } from './services';
+import { GqlConfigService, Logger, GrpcClientConfigService, RedisConfigService, PubSubConfigService } from './services';
 import { GraphQLModule } from '@nestjs/graphql';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggingModule } from '@eropple/nestjs-bunyan';
 import { ROOT_LOGGER } from './utils/logger.util';
-import { Logger } from './services/logger.service';
 import { ClientsModule } from '@nestjs/microservices';
-import { GrpcClientConfigService } from './services';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { PubSubModule } from '../pubsub';
 
 @Global()
 @Module({
@@ -23,11 +23,17 @@ import { GrpcClientConfigService } from './services';
         useClass: GrpcClientConfigService,
       },
     ]),
+    RedisModule.forRootAsync({
+      useClass: RedisConfigService,
+    }),
+    PubSubModule.forRootAsync({
+      useClass: PubSubConfigService,
+    }),
     GraphQLModule.forRootAsync({
       useClass: GqlConfigService,
     }),
   ],
   providers: [Logger],
-  exports: [Logger, ClientsModule],
+  exports: [Logger, ClientsModule, PubSubModule],
 })
 export class SharedModule {}
