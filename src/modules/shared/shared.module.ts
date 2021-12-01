@@ -1,6 +1,12 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { GqlConfigService, Logger, GrpcClientConfigService, RedisConfigService, PubSubConfigService } from './services';
+import {
+  GqlConfigService,
+  Logger,
+  GrpcClientConfigService,
+  RedisConfigService,
+  PubSubConfigService,
+} from './services';
 import { GraphQLModule } from '@nestjs/graphql';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggingModule } from '@eropple/nestjs-bunyan';
