@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  redis:
+    container_name: "gql-gateway-redis"
+    image: "redis:6.2.6-alpine3.14"
+    tty: true
+    ports:
+      - "6379:6379"
+  server:
+    container_name: "gql-gateway-server"
+    build:
+      context: .
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - GRPC_URL=${GRPC_URL}
+    depends_on:
+      - redis
+    tty: true
+    ports:
+      - "3001:3001"
